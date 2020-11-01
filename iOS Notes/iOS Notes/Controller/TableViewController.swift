@@ -14,7 +14,6 @@ class TableViewController: UITableViewController {
     override func loadView() {
         super.loadView()
         title = "iOS Notes"
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -36,6 +35,8 @@ class TableViewController: UITableViewController {
         toolbarItems = [spacer, toolbarText, spacer, write]
     }
     
+    //MARK: - TableView setup
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return notes.count
     }
@@ -56,7 +57,6 @@ class TableViewController: UITableViewController {
         } else {
             dateString = date.string(from: note.creation)
         }
-        
         if let lineBreakIndex = note.body.firstIndex(of: "\n") {
             let noteBodyString = String(note.body.prefix(upTo: lineBreakIndex))
             cell.textLabel?.text = noteBodyString
@@ -65,12 +65,10 @@ class TableViewController: UITableViewController {
             cell.textLabel?.text = note.body
             cell.detailTextLabel?.text = "\(dateString) No additional text"
         }
-        
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
         tableView.deselectRow(at: indexPath, animated: true)
         if let vc = storyboard?.instantiateViewController(identifier: "Detail") as? DetailViewController {
             vc.notes = notes
@@ -80,14 +78,15 @@ class TableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        
         if editingStyle == .delete {
             notes.remove(at: indexPath.row)
+            encoder()
             tableView.deleteRows(at: [indexPath], with: .fade)
         }
         
     }
     
+    //MARK: - Bar button methods
     
     @objc func compose() {
         //clicking compose will bring user to DetailViewController
@@ -103,6 +102,8 @@ class TableViewController: UITableViewController {
         }
     }
     
+    //MARK: - Save and Load methods
+    
     func loadNotes() {
         let defaults = UserDefaults.standard
         if let savedNotes = defaults.object(forKey: UserKeys.savedNotes) as? Data {
@@ -115,8 +116,15 @@ class TableViewController: UITableViewController {
             }
         }
     }
-    
-    
-    
+
+    func encoder() {
+        let jsonEncoder = JSONEncoder()
+        if let savedNote = try? jsonEncoder.encode(notes) {
+            let defaults = UserDefaults.standard
+            defaults.set(savedNote, forKey: UserKeys.savedNotes)
+        } else {
+            print("Failed to save note")
+        }
+    }
 }
 
